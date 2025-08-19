@@ -1,12 +1,12 @@
 # Progressive Knowledge Graph Builder Demo
 
-## Overview
-
-This demonstration illustrates how an AI assistant can progressively build and maintain a contextual knowledge graph through natural conversation with a user. The visualization shows real-time extraction and organization of information as the conversation unfolds between Sarah Chen and ARIA, her AI assistant.
-
 ## Live Demo
 
 **View the interactive demo at: https://gramm-ai.github.io/knowledge-graph-robot-assistant/**
+
+## Overview
+
+This demonstration illustrates how an AI assistant can progressively build and maintain a contextual knowledge graph through natural conversation with a user. The visualization shows real-time extraction and organization of information as the conversation unfolds between Sarah Chen and ARIA, her AI assistant.
 
 ## Purpose
 
