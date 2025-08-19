@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARIA Knowledge Graph Builder - Highlighted Updates</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .chat-container {
+            flex: 1;
+            background: rgba(30, 30, 46, 0.95);
+            border: 1px solid #4a4a6a;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 2px solid #4a4a6a;
+        }
+
+        .chat-header h2 {
+            font-size: 18px;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 12px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .date-separator {
+            text-align: center;
+            margin: 20px 0;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .date-separator span {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .message {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.5s forwards;
+            max-width: 75%;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.aria {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.aria .message-bubble {
+            background: rgba(74, 74, 106, 0.3);
+            color: #e0e0e0;
+            border: 1px solid #4a4a6a;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-label {
+            font-size: 11px;
+            margin-bottom: 4px;
+            opacity: 0.6;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .message.user .message-label {
+            text-align: right;
+        }
+
+        .graph-container {
+            flex: 1;
+            background: rgba(30, 30, 46, 0.95);
+            border: 1px solid #4a4a6a;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .graph-header {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 2px solid #4a4a6a;
+        }
+
+        .graph-header h3 {
+            font-size: 18px;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        .graph-header p {
+            opacity: 0.9;
+            font-size: 12px;
+        }
+
+        #knowledge-graph {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            white-space: pre;
+            color: #e0e0e0;
+        }
+
+        .tree-node {
+            transition: color 0.3s ease;
+        }
+
+        .tree-root {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tree-category {
+            color: #48bb78;
+            transition: all 0.3s ease;
+        }
+
+        .tree-item {
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .tree-completed {
+            color: #4ade80;
+        }
+
+        /* Yellow highlight for new/updated items */
+        .tree-updated-category {
+            color: #fbbf24 !important;
+            font-weight: bold;
+            animation: pulse 0.6s ease-out;
+        }
+
+        .tree-updated-item {
+            color: #fbbf24 !important;
+            animation: pulse 0.6s ease-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .update-indicator {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: rgba(251, 191, 36, 0.9);
+            color: #1a1a2e;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0;
+            animation: slideInOut 2s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideInOut {
+            0% {
+                opacity: 0;
+                transform: translateY(-50%) translateX(100px);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+            80% {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50%) translateX(100px);
+            }
+        }
+
+        .status-bar {
+            background: rgba(30, 30, 46, 0.8);
+            border-top: 1px solid #4a4a6a;
+            padding: 10px 20px;
+            font-size: 12px;
+            color: #a0a0c0;
+            text-align: center;
+        }
+
+        .status-info {
+            display: inline-block;
+            margin: 0 15px;
+        }
+
+        .status-info span {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 30, 46, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a6a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a5a7a;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>ARIA Assistant</h2>
+                <p id="chatDate">Conversation Log - March 15-16, 2024</p>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+        </div>
+        
+        <div class="graph-container">
+            <div class="graph-header">
+                <h3>Knowledge Graph</h3>
+                <p>Real-time Entity Extraction</p>
+            </div>
+            <div id="knowledge-graph"></div>
+            <div class="status-bar">
+                <span class="status-info">Data Points: <span id="dataPoints">0</span></span>
+                <span class="status-info">Connections: <span id="connections">0</span></span>
+                <span class="status-info">Categories: <span id="categories">0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Knowledge graph structure
+        let knowledgeGraph = {
+            'USER: Sarah Chen': {}
+        };
+
+        // Track the current update paths for highlighting
+        let currentUpdatePaths = new Set();
+
+        // Extended conversation with dates and additional day
+        const conversation = [
+            // Day 1 - March 15, 2024 (Friday)
+            {
+                type: 'date',
+                date: 'Friday, March 15, 2024 - 9:15 AM'
+            },
+            {
+                speaker: 'aria',
+                message: "Good morning! I'm ARIA, your new personal assistant. I'm here to help you manage your daily tasks and appointments. May I know your name?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "Hi ARIA! I'm Sarah Chen. I just moved to San Francisco and I'm feeling pretty overwhelmed with everything I need to get done.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Personal_Info': {
+                            'Name': 'Sarah Chen',
+                            'Current_Location': 'San Francisco',
+                            'Status': 'Recently moved'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "Nice to meet you, Sarah Chen! San Francisco is a wonderful city. When did you move here, and what's causing you to feel overwhelmed?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "I moved here three weeks ago for a new job at a tech startup called GreenTech Solutions. I'm 28 and this is my first time living on the West Coast.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Personal_Info': {
+                            'Age': '28',
+                            'Origin': 'Not West Coast (first time)',
+                            'Move_Date': 'February 23, 2024 (3 weeks ago)'
+                        },
+                        'Professional_Info': {
+                            'Company': 'GreenTech Solutions',
+                            'Industry': 'Tech startup',
+                            'Status': 'New job'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "That's a lot of transitions at once! Let me help you break this down. First, can I get your contact information so I can send you reminders?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "Sure! My phone number is 415-555-0142. My email is sarah.chen.dev@gmail.com. I'm temporarily staying at my friend Lisa's place in the Mission District.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Personal_Info': {
+                            'Phone': '415-555-0142',
+                            'Email': 'sarah.chen.dev@gmail.com',
+                            'Current_Location': 'Mission District, SF'
+                        },
+                        'Living_Situation': {
+                            'Current': 'Temporary at friend\'s place',
+                            'Location': 'Mission District',
+                            'Host': 'Friend - Lisa'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "Perfect! I've noted that you're in the Mission District. What type of help do you need most urgently today?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "I really need to find a dentist - I have a small cavity. And I should schedule my DMV appointment soon since my Ohio license expires next month.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Personal_Info': {
+                            'Origin': 'Ohio',
+                            'License_State': 'Ohio',
+                            'License_Expiry': 'April 2024'
+                        },
+                        'Immediate_Needs': {
+                            'Find_Dentist': 'Urgent - cavity',
+                            'DMV_Appointment': 'License expires April 2024',
+                            'Bank_Account': 'Pending',
+                            'Apartment_Hunting': 'Active'
+                        }
+                    }
+                }
+            },
+            {
+                type: 'date',
+                date: 'Friday, March 15, 2024 - 2:30 PM'
+            },
+            {
+                speaker: 'aria',
+                message: "Hi Sarah! I found Dr. Patricia Wong on Valencia Street with excellent reviews. She can see you Thursday, March 21st at 3 PM. Should I book it?",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Healthcare_Info': {
+                            'Potential_Dentist': 'Dr. Patricia Wong',
+                            'Location': 'Valencia Street'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'user',
+                message: "That would be amazing, yes please! Thursday works perfectly because I don't start my job until Monday, March 18th.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Professional_Info': {
+                            'Start_Date': 'Monday, March 18, 2024',
+                            'Role': 'Software Developer'
+                        },
+                        'This_Week_Schedule': {
+                            'Mon_Mar_18': 'First day at GreenTech Solutions',
+                            'Thu_Mar_21_3PM': 'Dentist - Dr. Patricia Wong'
+                        },
+                        'Healthcare_Info': {
+                            'Dentist': '✓ Dr. Patricia Wong, Valencia St'
+                        },
+                        'Immediate_Needs': {
+                            'Find_Dentist': '✓ Completed'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "Booked! What does the rest of your week look like? Any other appointments?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "Tomorrow Saturday I have a video call with HR at 11 AM. Next Friday, March 22nd, I'm meeting a potential roommate named Jessica at 7 PM to see an apartment in Hayes Valley. And Wednesday March 20th around 10 AM would be perfect for the DMV.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'This_Week_Schedule': {
+                            'Sat_Mar_16_11AM': 'HR video call - paperwork',
+                            'Wed_Mar_20_10AM': 'DMV appointment',
+                            'Fri_Mar_22_7PM': 'Apt viewing - Hayes Valley'
+                        },
+                        'Living_Situation': {
+                            'Goal': 'Apartment in Hayes Valley',
+                            'Potential_Roommate': 'Jessica',
+                            'Viewing_Date': 'March 22, 2024',
+                            'Rent_Estimate': '$1,400/month (split)'
+                        },
+                        'Personal_Info': {
+                            'Personal_Preference': 'Not a morning person (10 AM preferred)'
+                        }
+                    }
+                }
+            },
+            // Day 2 - March 16, 2024 (Saturday)
+            {
+                type: 'date',
+                date: 'Saturday, March 16, 2024 - 8:45 AM'
+            },
+            {
+                speaker: 'aria',
+                message: "Good morning, Sarah! You have your HR video call at 11 AM today. How are you feeling about starting your new job on Monday?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "Morning ARIA! I'm getting excited but also nervous. I realized I should probably get some professional clothes - my wardrobe is mostly casual since I was working from home in Columbus, Ohio.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Personal_Info': {
+                            'Previous_City': 'Columbus, Ohio',
+                            'Previous_Work_Style': 'Remote/WFH'
+                        },
+                        'Immediate_Needs': {
+                            'Professional_Wardrobe': 'Need to shop',
+                            'Budget': '$300-400 for clothes'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "Good thinking! After your HR call, you'll have time to shop. What's the dress code at GreenTech Solutions?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "They're pretty casual - jeans and nice tops are fine. I wear size 8 in tops and 10 in pants. Oh, and please remind me to call my mom Linda later - her birthday is next Sunday, March 24th, and I need to order something. She lives in Columbus, zip 43215.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Personal_Info': {
+                            'Clothing_Sizes': 'Top: 8, Pants: 10',
+                            'Style_Preference': 'Dark colors - navy, black, burgundy'
+                        },
+                        'Family_Info': {
+                            'Mother': 'Linda Chen',
+                            'Mother_Location': 'Columbus, OH 43215',
+                            'Mother_Birthday': 'March 24, 2024',
+                            'Mother_Interests': 'Gardening, mystery novels'
+                        },
+                        'Professional_Info': {
+                            'Dress_Code': 'Business casual'
+                        },
+                        'Today_Tasks': {
+                            'HR_Call': '11 AM - Complete paperwork',
+                            'Shopping': 'Professional clothes after HR',
+                            'Call_Mom': 'Reminder set',
+                            'Order_Gift': 'For mom\'s birthday'
+                        }
+                    }
+                }
+            },
+            {
+                type: 'date',
+                date: 'Saturday, March 16, 2024 - 3:20 PM'
+            },
+            {
+                speaker: 'aria',
+                message: "Hi Sarah! How did your HR call go? Were you able to complete all the paperwork?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "Hey! Yes, all done with HR. They seem really nice. I also found out I'll be working on their sustainability tracking platform. I managed to get some nice clothes at Nordstrom Rack - spent $350. Still need to call mom though!",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Professional_Info': {
+                            'Project': 'Sustainability tracking platform',
+                            'Team': 'Development team'
+                        },
+                        'Today_Tasks': {
+                            'HR_Call': '✓ Completed',
+                            'Shopping': '✓ Completed ($350 at Nordstrom Rack)'
+                        },
+                        'Financial_Info': {
+                            'Recent_Expenses': 'Clothes: $350',
+                            'Monthly_Budget': 'TBD - need to plan'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "Great progress! Don't forget to call your mom Linda. Also, would you like me to help you find a gift for her birthday next Sunday?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "Yes please! She loves gardening and mystery novels. Maybe a nice gardening tool set or the latest Louise Penny book? Budget around $50-75.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Family_Info': {
+                            'Gift_Ideas': 'Gardening tools or mystery book',
+                            'Gift_Budget': '$50-75'
+                        },
+                        'Immediate_Needs': {
+                            'Mom_Birthday_Gift': 'In progress - need to order by Mar 20'
+                        }
+                    }
+                }
+            },
+            {
+                type: 'date',
+                date: 'Saturday, March 16, 2024 - 7:45 PM'
+            },
+            {
+                speaker: 'aria',
+                message: "Sarah, I found a Japanese Hori Hori knife with a leather sheath for $65 on Amazon - highly rated for gardening. It can arrive by March 22nd if ordered tomorrow. Should I send you the link?",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Family_Info': {
+                            'Selected_Gift': 'Japanese Hori Hori knife - $65',
+                            'Delivery_Date': 'March 22, 2024'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'user',
+                message: "Perfect! Send me the link. I finally called mom - we talked for an hour. She's happy I'm settling in. Oh, Jessica texted about the apartment - it's $2,800 total for a 2-bedroom on Grove Street, so $1,400 each plus utilities. She's a nurse at UCSF working 12-hour shifts.",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Today_Tasks': {
+                            'Call_Mom': '✓ Completed (1 hour call)'
+                        },
+                        'Living_Situation': {
+                            'Apartment_Details': '2BR on Grove St, Hayes Valley',
+                            'Total_Rent': '$2,800/month',
+                            'Your_Share': '$1,400 + utilities',
+                            'Potential_Roommate': 'Jessica - UCSF nurse',
+                            'Roommate_Schedule': '12-hour shifts'
+                        },
+                        'Communication_Log': {
+                            'Last_Mom_Call': 'March 16, 2024 - 1 hour',
+                            'Jessica_Text': 'Apartment details confirmed'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "That sounds like a good match - Jessica being gone for long shifts means you'll have quiet time to work from home. How are you feeling about Monday? Ready for your first day?",
+                updates: {}
+            },
+            {
+                speaker: 'user',
+                message: "I'm nervous but ready! I need to set up my home office corner at Lisa's place tomorrow, and prep my laptop. Can you remind me Sunday evening to review the onboarding documents they sent? Also to set multiple alarms - I really am NOT a morning person and I need to be there by 9 AM!",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Sunday_Tasks': {
+                            'Setup_Home_Office': 'At Lisa\'s place',
+                            'Prep_Laptop': 'For first day',
+                            'Review_Docs': 'Onboarding materials - reminder set',
+                            'Set_Alarms': 'Multiple for 9 AM arrival'
+                        },
+                        'Work_Schedule': {
+                            'Start_Time': '9 AM',
+                            'Work_From_Home': 'Occasional - need quiet space'
+                        },
+                        'Personal_Info': {
+                            'Sleep_Pattern': 'Definitely not a morning person',
+                            'Needs_Multiple_Alarms': 'True'
+                        }
+                    }
+                }
+            },
+            {
+                speaker: 'aria',
+                message: "I'll set those reminders for you! Your week is shaping up well: Monday is your first day, Wednesday is DMV, Thursday is the dentist, and Friday is the apartment viewing. You're making great progress on settling into San Francisco!",
+                updates: {
+                    'USER: Sarah Chen': {
+                        'Week_Summary': {
+                            'Mon_Mar_18': '✓ First day - GreenTech Solutions',
+                            'Wed_Mar_20': '✓ DMV appointment - 10 AM',
+                            'Thu_Mar_21': '✓ Dentist - Dr. Wong - 3 PM',
+                            'Fri_Mar_22': '✓ Apartment viewing - 7 PM',
+                            'Sun_Mar_24': '⚠️ Mom\'s birthday'
+                        },
+                        'Overall_Status': {
+                            'Settlement_Progress': 'On track',
+                            'Priority_Tasks': 'First day prep, DMV, Housing'
+                        }
+                    }
+                }
+            }
+        ];
+
+        let currentIndex = 0;
+        let dataPointsCount = 0;
+        let connectionsCount = 0;
+
+        function getUpdatePaths(updates, prefix = '') {
+            const paths = new Set();
+            
+            function traverse(obj, currentPath) {
+                for (const [key, value] of Object.entries(obj)) {
+                    const newPath = currentPath ? `${currentPath}|${key}` : key;
+                    paths.add(newPath);
+                    
+                    if (typeof value === 'object' && value !== null) {
+                        traverse(value, newPath);
+                    }
+                }
+            }
+            
+            traverse(updates, prefix);
+            return paths;
+        }
+
+        function deepMerge(target, source) {
+            for (const key in source) {
+                if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                    if (!target[key]) target[key] = {};
+                    deepMerge(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
+                    dataPointsCount++;
+                }
+            }
+        }
+
+        function renderKnowledgeGraph() {
+            const container = document.getElementById('knowledge-graph');
+            let output = '';
+            
+            function renderNode(obj, prefix = '', isLast = true, currentPath = '') {
+                for (const [key, value] of Object.entries(obj)) {
+                    const isLastItem = key === Object.keys(obj)[Object.keys(obj).length - 1];
+                    const connector = isLastItem ? '└── ' : '├── ';
+                    const continuation = isLastItem ? '    ' : '│   ';
+                    const newPath = currentPath ? `${currentPath}|${key}` : key;
+                    
+                    if (typeof value === 'object' && value !== null) {
+                        const isUpdated = currentUpdatePaths.has(newPath);
+                        const className = isUpdated ? 'tree-updated-category' : 'tree-category';
+                        output += `<span class="${className}">${prefix}${connector}${key}</span>\n`;
+                        renderNode(value, prefix + continuation, isLastItem, newPath);
+                        connectionsCount++;
+                    } else {
+                        const isUpdated = currentUpdatePaths.has(newPath);
+                        let className = 'tree-item';
+                        if (isUpdated) {
+                            className = 'tree-updated-item';
+                        } else if (value.includes('✓')) {
+                            className = 'tree-completed';
+                        }
+                        output += `<span class="${className}">${prefix}${connector}${key}: ${value}</span>\n`;
+                    }
+                }
+            }
+            
+            for (const [root, content] of Object.entries(knowledgeGraph)) {
+                output += `<span class="tree-root">${root}</span>\n`;
+                renderNode(content, '', true, root);
+            }
+            
+            container.innerHTML = output;
+            
+            // Update status bar
+            document.getElementById('dataPoints').textContent = dataPointsCount;
+            document.getElementById('connections').textContent = connectionsCount;
+            document.getElementById('categories').textContent = Object.keys(knowledgeGraph['USER: Sarah Chen']).length;
+        }
+
+        function showUpdateIndicator(text) {
+            const indicator = document.createElement('div');
+            indicator.className = 'update-indicator';
+            indicator.textContent = text;
+            document.body.appendChild(indicator);
+            setTimeout(() => indicator.remove(), 2000);
+        }
+
+        function addDateSeparator(dateText) {
+            const chatMessages = document.getElementById('chatMessages');
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'date-separator';
+            dateDiv.innerHTML = `<span>${dateText}</span>`;
+            chatMessages.appendChild(dateDiv);
+        }
+
+        function addMessage(speaker, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${speaker}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-label">${speaker === 'user' ? 'Sarah' : 'ARIA'}</div>
+                <div class="message-bubble">${message}</div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function playConversation() {
+            // Initial render
+            renderKnowledgeGraph();
+            
+            // Play through conversation
+            for (let i = 0; i < conversation.length; i++) {
+                const item = conversation[i];
+                
+                if (item.type === 'date') {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    addDateSeparator(item.date);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                }
+                
+                // Add message
+                addMessage(item.speaker, item.message);
+                
+                // Update knowledge graph with highlighting
+                if (item.updates && Object.keys(item.updates).length > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                    // Clear previous highlights and set new ones
+                    currentUpdatePaths.clear();
+                    
+                    for (const [key, value] of Object.entries(item.updates)) {
+                        // Get all paths that will be updated
+                        const paths = getUpdatePaths(value, key);
+                        paths.forEach(path => currentUpdatePaths.add(path));
+                        
+                        // Merge the updates
+                        deepMerge(knowledgeGraph[key], value);
+                    }
+                    
+                    // Show update indicator
+                    const updateCount = currentUpdatePaths.size;
+                    if (updateCount > 0) {
+                        showUpdateIndicator(`+${updateCount} updates`);
+                    }
+                    
+                    connectionsCount = 0;
+                    renderKnowledgeGraph();
+                }
+                
+                // Wait before next message
+                await new Promise(resolve => setTimeout(resolve, 1800));
+            }
+            
+            // Clear highlights after final update
+            currentUpdatePaths.clear();
+            renderKnowledgeGraph();
+            
+            // Final summary
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            addDateSeparator('End of Day 2 Summary');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            addMessage('aria', "Great progress over these two days, Sarah! I've captured 48 data points across 12 categories. You're all set for your first day on Monday, and we have your entire week organized. Sleep well and don't forget those alarms for Monday morning!");
+        }
+
+        // Start the auto-play demonstration
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                playConversation();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
