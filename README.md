@@ -2,7 +2,7 @@
 
 ## Live Demo
 
-**View the interactive demo at: https://gramm-ai.github.io/knowledge-graph-robot-assistant/**
+**View the demo at: https://gramm-ai.github.io/knowledge-graph-robot-assistant/**
 
 ## Overview
 
