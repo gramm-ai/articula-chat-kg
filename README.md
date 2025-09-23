@@ -2,7 +2,7 @@
 
 ## Live Demo
 
-**View the demo at: https://gramm-ai.github.io/ambient-kg/**
+**View the demo at: https://gramm-ai.github.io/articula-note/**
 
 ## Overview
 
