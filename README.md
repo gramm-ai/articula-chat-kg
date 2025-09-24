@@ -2,7 +2,7 @@
 
 ## Live Demo
 
-**View the demo at: https://gramm-ai.github.io/articula-note/**
+**View the demo at: https://gramm-ai.github.io/articula-chat-kg/**
 
 ## Overview
 
