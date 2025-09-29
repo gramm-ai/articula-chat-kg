@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARIA Knowledge Graph Builder - Highlighted Updates</title>
+    <title>Articula Knowledge Graph Builder - Highlighted Updates</title>
     <style>
         * {
             margin: 0;
@@ -822,7 +822,7 @@
                 addMessage(item.speaker, item.message);
                 
                 // Update knowledge graph with highlighting
-                if (item.updates && Object.keys(item.updates).length > 0) {
+                if (item.speaker === 'user' && item.updates && Object.keys(item.updates).length > 0) {
                     await new Promise(resolve => setTimeout(resolve, 800));
                     
                     // Clear previous highlights and set new ones
